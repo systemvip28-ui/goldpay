@@ -11,6 +11,7 @@ const STATUS_FILE = path.join(__dirname, 'status.json');
 
 if (!fs.existsSync(STATUS_FILE)) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify([], null, 2));
+    console.log("✅ status.json dibuat");
 }
 
 function updateStatus(trxId, status) {
@@ -64,15 +65,19 @@ bot.on('callback_query', async (ctx) => {
             await ctx.answerCbQuery("❌ Topup ditolak");
         }
     } catch (err) {
-        console.error(err);
+        console.error("Callback Error:", err);
     }
 });
 
-bot.start((ctx) => ctx.reply("✅ GoldPay Bot Aktif!"));
+bot.start((ctx) => {
+    ctx.reply("✅ GoldPay Bot Aktif!\n\nGunakan tombol di pesan topup.");
+});
 
 bot.launch()
-    .then(() => console.log("🤖 Bot GoldPay berjalan..."))
-    .catch(err => console.error(err));
+    .then(() => console.log("🤖 Bot GoldPay berjalan sukses..."))
+    .catch(err => console.error("Launch Error:", err));
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+console.log("Bot diinisialisasi...");
