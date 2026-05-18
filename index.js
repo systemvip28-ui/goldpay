@@ -3,10 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-// CONFIG
 const BOT_TOKEN = "8645835190:AAHG0ZIzwvHSyds2B7nfZtnAEdMRhyjBs7U";
 const ADMIN_CHAT_ID = "8271325752";
-const PORT = process.env.PORT || 3000;   // Render butuh ini
+const PORT = process.env.PORT || 3000;
 
 const bot = new Telegraf(BOT_TOKEN);
 const STATUS_FILE = path.join(__dirname, 'status.json');
@@ -15,6 +14,7 @@ if (!fs.existsSync(STATUS_FILE)) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify([], null, 2));
 }
 
+// ==================== UPDATE STATUS ====================
 function updateStatus(trxId, status) {
     let data = [];
     try {
@@ -30,7 +30,7 @@ function updateStatus(trxId, status) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify(data, null, 2));
 }
 
-// Callback Handler
+// ==================== BOT CALLBACK ====================
 bot.on('callback_query', async (ctx) => {
     try {
         const data = ctx.callbackQuery.data;
@@ -57,25 +57,37 @@ bot.on('callback_query', async (ctx) => {
     }
 });
 
-bot.start((ctx) => ctx.reply("✅ GoldPay Bot Aktif!\n\nGunakan tombol di pesan topup."));
+bot.start((ctx) => ctx.reply("✅ GoldPay Bot Aktif!"));
 
 bot.launch()
     .then(() => console.log("🤖 Bot Telegram berjalan..."))
     .catch(err => console.error(err));
 
-// ============== HTTP SERVER untuk Render Web Service ==============
+// ==================== HTTP SERVER (WAJIB UNTUK RENDER) ====================
 const server = http.createServer((req, res) => {
-    if (req.url === '/health' || req.url === '/') {
+    if (req.url === '/' || req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('GoldPay Bot is running ✅');
-    } else {
+    } 
+    else if (req.url === '/status.json' || req.url.startsWith('/status.json')) {
+        fs.readFile(STATUS_FILE, (err, data) => {
+            if (err) {
+                res.writeHead(500);
+                res.end('Error reading status file');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(data);
+        });
+    } 
+    else {
         res.writeHead(404);
         res.end('Not Found');
     }
 });
 
 server.listen(PORT, () => {
-    console.log(`🌐 HTTP Server berjalan di port ${PORT}`);
+    console.log(`🌐 Server berjalan di port ${PORT}`);
 });
 
-console.log("Bot GoldPay diinisialisasi...");
+console.log("GoldPay Bot + Server siap...");
