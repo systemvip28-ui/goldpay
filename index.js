@@ -1,17 +1,18 @@
 const { Telegraf } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 
+// CONFIG
 const BOT_TOKEN = "8645835190:AAHG0ZIzwvHSyds2B7nfZtnAEdMRhyjBs7U";
 const ADMIN_CHAT_ID = "8271325752";
+const PORT = process.env.PORT || 3000;   // Render butuh ini
 
 const bot = new Telegraf(BOT_TOKEN);
-
 const STATUS_FILE = path.join(__dirname, 'status.json');
 
 if (!fs.existsSync(STATUS_FILE)) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify([], null, 2));
-    console.log("✅ status.json dibuat");
 }
 
 function updateStatus(trxId, status) {
@@ -21,20 +22,15 @@ function updateStatus(trxId, status) {
     } catch (e) {}
 
     const index = data.findIndex(item => item.id === trxId);
-    
     if (index !== -1) {
         data[index].status = status;
     } else {
-        data.push({ 
-            id: trxId, 
-            status: status, 
-            timestamp: new Date().toISOString() 
-        });
+        data.push({ id: trxId, status: status, timestamp: new Date().toISOString() });
     }
-
     fs.writeFileSync(STATUS_FILE, JSON.stringify(data, null, 2));
 }
 
+// Callback Handler
 bot.on('callback_query', async (ctx) => {
     try {
         const data = ctx.callbackQuery.data;
@@ -47,37 +43,39 @@ bot.on('callback_query', async (ctx) => {
         if (data.startsWith('acc_')) {
             const [, trxId, nominal] = data.split('_');
             updateStatus(trxId, "SUCCESS");
-
-            await ctx.editMessageText(
-                ctx.callbackQuery.message.text + `\n\n✅ Topup Rp ${Number(nominal).toLocaleString('id-ID')} TELAH DITERIMA`,
-                { parse_mode: 'HTML' }
-            );
-            await ctx.answerCbQuery("✅ Topup diterima!");
-
-        } else if (data.startsWith('reject_')) {
+            await ctx.editMessageText(ctx.callbackQuery.message.text + `\n\n✅ Topup Rp ${Number(nominal).toLocaleString('id-ID')} TELAH DITERIMA`);
+            await ctx.answerCbQuery("✅ Diterima");
+        } 
+        else if (data.startsWith('reject_')) {
             const [, trxId] = data.split('_');
             updateStatus(trxId, "REJECT");
-
-            await ctx.editMessageText(
-                ctx.callbackQuery.message.text + `\n\n❌ Topup TELAH DITOLAK`,
-                { parse_mode: 'HTML' }
-            );
-            await ctx.answerCbQuery("❌ Topup ditolak");
+            await ctx.editMessageText(ctx.callbackQuery.message.text + `\n\n❌ Topup TELAH DITOLAK`);
+            await ctx.answerCbQuery("❌ Ditolak");
         }
     } catch (err) {
-        console.error("Callback Error:", err);
+        console.error(err);
     }
 });
 
-bot.start((ctx) => {
-    ctx.reply("✅ GoldPay Bot Aktif!\n\nGunakan tombol di pesan topup.");
-});
+bot.start((ctx) => ctx.reply("✅ GoldPay Bot Aktif!\n\nGunakan tombol di pesan topup."));
 
 bot.launch()
-    .then(() => console.log("🤖 Bot GoldPay berjalan sukses..."))
-    .catch(err => console.error("Launch Error:", err));
+    .then(() => console.log("🤖 Bot Telegram berjalan..."))
+    .catch(err => console.error(err));
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// ============== HTTP SERVER untuk Render Web Service ==============
+const server = http.createServer((req, res) => {
+    if (req.url === '/health' || req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('GoldPay Bot is running ✅');
+    } else {
+        res.writeHead(404);
+        res.end('Not Found');
+    }
+});
 
-console.log("Bot diinisialisasi...");
+server.listen(PORT, () => {
+    console.log(`🌐 HTTP Server berjalan di port ${PORT}`);
+});
+
+console.log("Bot GoldPay diinisialisasi...");
