@@ -29,37 +29,35 @@ function updateStatus(trxId, status) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify(data, null, 2));
 }
 
-// Bot Callback
 bot.on('callback_query', async (ctx) => {
     try {
         const data = ctx.callbackQuery.data;
         const chatId = ctx.callbackQuery.message.chat.id.toString();
 
-        if (chatId !== ADMIN_CHAT_ID) return ctx.answerCbQuery("❌ Anda bukan admin!");
+        if (chatId !== ADMIN_CHAT_ID) return ctx.answerCbQuery("Anda bukan admin!");
 
         if (data.startsWith('acc_')) {
             const [, trxId, nominal] = data.split('_');
             updateStatus(trxId, "SUCCESS");
-            await ctx.editMessageText(ctx.callbackQuery.message.text + `\n\n✅ Topup Rp ${Number(nominal).toLocaleString('id-ID')} TELAH DITERIMA`);
-            await ctx.answerCbQuery("✅ Diterima");
+            await ctx.editMessageText(ctx.callbackQuery.message.text + `\n\nTopup Rp ${Number(nominal).toLocaleString('id-ID')} TELAH DITERIMA`);
+            await ctx.answerCbQuery("Diterima");
         } else if (data.startsWith('reject_')) {
             const [, trxId] = data.split('_');
             updateStatus(trxId, "REJECT");
-            await ctx.editMessageText(ctx.callbackQuery.message.text + `\n\n❌ Topup TELAH DITOLAK`);
-            await ctx.answerCbQuery("❌ Ditolak");
+            await ctx.editMessageText(ctx.callbackQuery.message.text + `\n\nTopup TELAH DITOLAK`);
+            await ctx.answerCbQuery("Ditolak");
         }
     } catch (err) {
         console.error(err);
     }
 });
 
-bot.start((ctx) => ctx.reply("✅ GoldPay Bot Aktif!"));
+bot.start((ctx) => ctx.reply("GoldPay Bot Aktif!"));
 
 bot.launch().then(() => console.log("Bot berjalan..."));
 
-// ==================== HTTP SERVER + CORS ====================
 const server = http.createServer((req, res) => {
-    // CORS Header
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -72,7 +70,7 @@ const server = http.createServer((req, res) => {
 
     if (req.url === '/' || req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('GoldPay Bot is running ✅');
+        res.end('GoldPay Bot is running');
     } 
     else if (req.url.startsWith('/status.json')) {
         fs.readFile(STATUS_FILE, (err, data) => {
@@ -95,4 +93,4 @@ server.listen(PORT, () => {
     console.log(`Server berjalan di port ${PORT}`);
 });
 
-console.log("GoldPay Bot + Server siap...");
+console.log("Live");
