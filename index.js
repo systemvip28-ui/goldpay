@@ -9,7 +9,6 @@ const bot = new Telegraf(BOT_TOKEN);
 
 const STATUS_FILE = path.join(__dirname, 'status.json');
 
-// Buat status.json jika belum ada
 if (!fs.existsSync(STATUS_FILE)) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify([], null, 2));
 }
@@ -35,7 +34,6 @@ function updateStatus(trxId, status) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify(data, null, 2));
 }
 
-// Callback Handler
 bot.on('callback_query', async (ctx) => {
     try {
         const data = ctx.callbackQuery.data;
@@ -66,20 +64,15 @@ bot.on('callback_query', async (ctx) => {
             await ctx.answerCbQuery("❌ Topup ditolak");
         }
     } catch (err) {
-        console.error("Callback Error:", err);
+        console.error(err);
     }
 });
 
-bot.start((ctx) => {
-    ctx.reply("🤖 GoldPay Bot Aktif!\n\nGunakan tombol di pesan topup.");
-});
+bot.start((ctx) => ctx.reply("✅ GoldPay Bot Aktif!"));
 
 bot.launch()
-    .then(() => console.log("✅ Bot GoldPay berjalan sukses..."))
-    .catch(err => console.error("❌ Launch Error:", err));
+    .then(() => console.log("🤖 Bot GoldPay berjalan..."))
+    .catch(err => console.error(err));
 
-// Keep Alive (penting untuk Render)
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-console.log("Bot diinisialisasi...");
